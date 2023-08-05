@@ -1,26 +1,53 @@
 package com.epam.mjc.io;
 
-import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 
 public class FileReader {
 
-    public Profile getDataFromFile(File file){
-        String name;
-        String age;
-        String email;
-        String phone;
-        try (BufferedReader bf = new BufferedReader(new java.io.FileReader(file))) {
-            name = bf.readLine().split(": ")[1];
-            age = bf.readLine().split(": ")[1];
-            email = bf.readLine().split(": ")[1];
-            phone = bf.readLine().split(": ")[1];
+    public Profile getDataFromFile(File file) {
+        return parseProfileData(readFileData(file));
+    }
 
+    private static String readFileData(File file) {
+        StringBuilder data = new StringBuilder();
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                data.append(new String(buffer, 0, bytesRead));
+            }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        return new Profile(name, Integer.parseInt(age), email, Long.parseLong(phone));
+        return data.toString();
+    }
+
+    private static Profile parseProfileData(String fileData) {
+        Profile profile = new Profile();
+
+        String[] lines = fileData.split("\n");
+        for (String line : lines) {
+            String[] parts = line.split(":");
+            if (parts.length == 2) {
+                String key = parts[0].trim();
+                String value = parts[1].trim();
+
+                if (key.equalsIgnoreCase("Name")) {
+                    profile.setName(value);
+                } else if (key.equalsIgnoreCase("Age")) {
+                    int age = Integer.parseInt(value);
+                    profile.setAge(age);
+                } else if (key.equalsIgnoreCase("Email")) {
+                    profile.setEmail(value);
+                } else if (key.equalsIgnoreCase("Phone")) {
+                    profile.setPhone(Long.valueOf(value));
+                }
+            }
+        }
+
+        return profile;
     }
 }
